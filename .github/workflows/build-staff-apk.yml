@@ -70,16 +70,16 @@ jobs:
         working-directory: restaurant-ops
         run: npx expo prebuild --platform android --no-install
 
-      - name: Build installable APK
+      - name: Build standalone release APK
         working-directory: restaurant-ops/android
-        run: ./gradlew --no-daemon :app:assembleDebug
+        run: ./gradlew --no-daemon :app:assembleRelease
 
       - name: Publish APK as a GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p release
-          cp restaurant-ops/android/app/build/outputs/apk/debug/app-debug.apk release/purple-haze-operations.apk
+          cp restaurant-ops/android/app/build/outputs/apk/release/app-release.apk release/purple-haze-operations.apk
           tag="staff-${GITHUB_SHA:0:12}"
           gh release create "$tag" release/purple-haze-operations.apk \
             --title "Purple Haze Staff Operations $tag" \
