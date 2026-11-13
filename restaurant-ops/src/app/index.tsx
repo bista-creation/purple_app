@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, Sc
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import Constants from 'expo-constants';
 import OrderAlarm from '../components/OrderAlarm';
 import { API_BASE, assignRider, getAdminReport, getDispatchBoard, getDispatchRiders, listOrders, signIn, signOut, updateOrder, type DispatchDelivery, type DispatchRider, type StaffOrder, type StaffUser } from '../services/api';
@@ -78,6 +79,16 @@ export default function OperationsScreen() {
       if (Platform.OS === 'web') { setPushState('Browser preview · live queue only'); return; }
       if (!projectId) { setPushState('Live queue on · add EAS project ID for push'); return; }
       try {
+        if (Platform.OS === 'android') {
+          await Notifications.setNotificationChannelAsync('incoming-orders', {
+            name: 'Incoming orders',
+            description: 'Urgent new restaurant orders',
+            importance: AndroidImportance.MAX,
+            vibrationPattern: [0, 450, 180, 450, 180, 450],
+            lightColor: '#F5B942',
+            sound: 'order_alert.wav',
+          });
+        }
         const permission = await Notifications.requestPermissionsAsync();
         if (!active) return;
         if (!permission.granted) { setPushState('Notifications are disabled on this device'); return; }
@@ -89,7 +100,10 @@ export default function OperationsScreen() {
       } catch { if (active) setPushState('Push setup needs a development build'); }
     };
     void configurePush();
-    return () => { active = false; };
+    const tokenSubscription = Notifications.addPushTokenListener(() => {
+      if (active) void configurePush();
+    });
+    return () => { active = false; tokenSubscription.remove(); };
   }, [user]);
 
   const authenticate = async () => {
