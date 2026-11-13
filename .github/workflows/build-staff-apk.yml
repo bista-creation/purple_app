@@ -32,11 +32,20 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
-          echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          echo "/usr/local/lib/android/sdk/platform-tools" >> "$GITHUB_PATH"
-          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
-          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --install \
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          sdkmanager_path="$(find "$sdk_root" /opt/android-sdk /usr/lib/android-sdk -type f -name sdkmanager -print -quit 2>/dev/null || true)"
+          if [ -z "$sdkmanager_path" ]; then
+            echo "Android SDK manager was not found. ANDROID_HOME=${ANDROID_HOME:-unset}; ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
+            find /usr/local/lib/android /opt /usr/lib/android-sdk -maxdepth 5 -type f -name sdkmanager -print 2>/dev/null || true
+            exit 1
+          fi
+          sdk_root="$(dirname "$(dirname "$(dirname "$(dirname "$sdkmanager_path")")")")"
+          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
+          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          yes | "$sdkmanager_path" --licenses >/dev/null
+          "$sdkmanager_path" --install \
             "platform-tools" "platforms;android-37" "build-tools;37.0.0"
 
       - name: Install JavaScript dependencies
