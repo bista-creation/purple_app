@@ -54,9 +54,13 @@ jobs:
         run: |
           sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           sdkmanager_path="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          set +o pipefail
           yes | "$sdkmanager_path" --licenses >/dev/null
+          license_status=${PIPESTATUS[1]}
+          set -o pipefail
+          if [ "$license_status" -ne 0 ]; then exit "$license_status"; fi
           "$sdkmanager_path" --install \
-            "platform-tools" "platforms;android-37" "build-tools;37.0.0"
+            "platform-tools" "platforms;android-37.0" "build-tools;37.0.0"
 
       - name: Install JavaScript dependencies
         working-directory: restaurant-ops
