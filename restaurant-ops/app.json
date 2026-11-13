@@ -38,7 +38,7 @@
         "expo-notifications",
         {
           "sounds": [
-            "./assets/order-alert.wav"
+            "./assets/order_alert.wav"
           ],
           "defaultChannel": "incoming-orders"
         }

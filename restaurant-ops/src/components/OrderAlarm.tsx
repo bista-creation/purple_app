@@ -12,7 +12,7 @@ export default function OrderAlarm({ active }: { active: boolean }) {
     let cancelled = false;
     void import('expo-audio').then(({ createAudioPlayer }) => {
       if (cancelled) return;
-      const player = createAudioPlayer(require('../../assets/order-alert.wav'));
+      const player = createAudioPlayer(require('../../assets/order_alert.wav'));
       player.loop = true;
       player.volume = 1;
       playerRef.current = player;

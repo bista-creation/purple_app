@@ -13,7 +13,7 @@ function AppSetup() {
     if (Platform.OS !== 'web') {
       void import('expo-audio').then(({ setAudioModeAsync }) => setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'doNotMix' })).catch(() => undefined);
     }
-    if (Platform.OS === 'android') void Notifications.setNotificationChannelAsync('incoming-orders', { name: 'Incoming orders', description: 'Urgent new restaurant orders', importance: AndroidImportance.MAX, vibrationPattern: [0, 450, 180, 450, 180, 450], lightColor: '#F5B942', sound: 'order-alert.wav', lockscreenVisibility: AndroidNotificationVisibility.PUBLIC });
+    if (Platform.OS === 'android') void Notifications.setNotificationChannelAsync('incoming-orders', { name: 'Incoming orders', description: 'Urgent new restaurant orders', importance: AndroidImportance.MAX, vibrationPattern: [0, 450, 180, 450, 180, 450], lightColor: '#F5B942', sound: 'order_alert.wav', lockscreenVisibility: AndroidNotificationVisibility.PUBLIC });
   }, []);
   return <Stack screenOptions={{ headerShown: false }} />;
 }
