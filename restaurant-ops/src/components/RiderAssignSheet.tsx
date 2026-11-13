@@ -1,0 +1,26 @@
+import { useState } from 'react';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import type { DispatchRider } from '../services/api';
+import { palette as c } from '../theme/tokens';
+
+export default function RiderAssignSheet({ visible, orderNumber, riders, loading, error, submitting, onClose, onRetry, onAssign }: {
+  visible: boolean; orderNumber: string; riders: DispatchRider[]; loading: boolean; error: boolean; submitting: boolean;
+  onClose: () => void; onRetry: () => void; onAssign: (rider: DispatchRider) => void;
+}) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const available = riders.filter((rider) => !rider.isBlocked && rider.shiftStatus === 'ON_DUTY' && rider.licenseStatus === 'VERIFIED');
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <View style={s.backdrop}><View style={s.sheet}>
+      <View style={s.heading}><View style={{ flex: 1 }}><Text style={s.eyebrow}>RIDER DISPATCH</Text><Text style={s.title}>Order #{orderNumber}</Text><Text style={s.caption}>The rider app will receive the assignment and start its 120 second accept timer.</Text></View><Pressable onPress={onClose} hitSlop={10} style={s.close}><Ionicons name="close" size={22} color={c.plum} /></Pressable></View>
+      {loading ? <View style={s.loading}><ActivityIndicator color={c.purple} /><Text style={s.muted}>Loading available riders…</Text></View> : error ? <View style={s.empty}><Text style={s.name}>Could not load available riders</Text><Pressable onPress={onRetry}><Text style={s.retry}>Tap to retry</Text></Pressable></View> : available.length ? <ScrollView style={s.list}>
+        {available.map((rider) => <Pressable key={rider.id} onPress={() => setSelected(rider.id)} style={[s.rider, selected === rider.id && s.riderSelected]}>
+          <View style={s.bike}><Ionicons name="bicycle" size={20} color={c.purple} /></View><View style={{ flex: 1 }}><Text style={s.name}>{rider.name || 'Rider'}</Text><Text style={s.meta}>{rider.vehicleType} · {rider.activeDeliveriesCount} active delivery{rider.activeDeliveriesCount === 1 ? '' : 'ies'}</Text>{rider.phone ? <Text style={s.meta}>{rider.phone}</Text> : null}</View><Ionicons name={selected === rider.id ? 'radio-button-on' : 'radio-button-off'} size={20} color={selected === rider.id ? c.purple : c.muted} />
+        </Pressable>)}
+      </ScrollView> : <View style={s.empty}><Ionicons name="bicycle-outline" size={25} color={c.muted} /><Text style={s.name}>No eligible riders are on duty</Text><Text style={s.meta}>Riders must be on duty with a verified, current license.</Text></View>}
+      <View style={s.footer}><Pressable onPress={onClose} style={s.cancel}><Text style={s.cancelText}>Cancel</Text></Pressable><Pressable disabled={!selected || submitting || loading} onPress={() => { const rider = available.find((item) => item.id === selected); if (rider) onAssign(rider); }} style={[s.assign, (!selected || submitting) && { opacity: 0.5 }]}>{submitting ? <ActivityIndicator color={c.white} /> : <><Ionicons name="send" size={15} color={c.white} /><Text style={s.assignText}>Assign rider</Text></>}</Pressable></View>
+    </View></View>
+  </Modal>;
+}
+
+const s = StyleSheet.create({ backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: '#160D1D99' }, sheet: { maxHeight: '82%', backgroundColor: c.paper, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, paddingBottom: 26 }, heading: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 }, eyebrow: { color: c.purple, fontSize: 9, fontWeight: '900', letterSpacing: 1.3 }, title: { color: c.plum, fontSize: 21, fontWeight: '900', marginTop: 4 }, caption: { color: c.muted, fontSize: 11, lineHeight: 16, marginTop: 5 }, close: { padding: 5 }, list: { flexGrow: 0 }, rider: { flexDirection: 'row', alignItems: 'center', gap: 11, padding: 12, backgroundColor: c.white, borderWidth: 1, borderColor: c.border, borderRadius: 13, marginTop: 8 }, riderSelected: { borderColor: c.purple, backgroundColor: '#F6F0FC' }, bike: { width: 38, height: 38, borderRadius: 12, backgroundColor: c.lavender, alignItems: 'center', justifyContent: 'center' }, name: { color: c.plum, fontSize: 12, fontWeight: '900' }, meta: { color: c.muted, fontSize: 10, marginTop: 3 }, loading: { minHeight: 110, gap: 10, alignItems: 'center', justifyContent: 'center' }, muted: { color: c.muted, fontSize: 11 }, retry: { color: c.purple, fontSize: 11, fontWeight: '900', padding: 8 }, empty: { minHeight: 130, alignItems: 'center', justifyContent: 'center', gap: 7, padding: 16, backgroundColor: c.white, borderRadius: 13 }, footer: { flexDirection: 'row', gap: 9, marginTop: 15 }, cancel: { paddingHorizontal: 18, height: 46, borderRadius: 11, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }, cancelText: { color: c.plum, fontSize: 11, fontWeight: '800' }, assign: { flex: 1, height: 46, borderRadius: 11, backgroundColor: c.purple, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 }, assignText: { color: c.white, fontSize: 12, fontWeight: '900' } });

@@ -1,0 +1,1 @@
+export const palette = { plum: '#271333', purple: '#6B2DBD', deep: '#3B176D', gold: '#F5B942', paper: '#FAF8FF', lavender: '#F0E8FC', white: '#FFFFFF', ink: '#241C2C', muted: '#766D7F', border: '#E5DCF0', green: '#217A53', red: '#B42338', amber: '#9B6100' };

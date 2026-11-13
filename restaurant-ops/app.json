@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Purple Haze Operations",
+    "slug": "purplehaze-operations",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/app-icon.png",
+    "scheme": "purplehaze-ops",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "icon": "./assets/images/app-icon.png",
+      "bundleIdentifier": "com.bistacreation.purplehaze.staff"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FAF8FF",
+        "foregroundImage": "./assets/images/app-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.bistacreation.purplehaze.staff",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
+    },
+    "web": {
+      "output": "server",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "sounds": [
+            "./assets/order-alert.wav"
+          ],
+          "defaultChannel": "incoming-orders"
+        }
+      ],
+      "expo-secure-store",
+      "expo-audio",
+      "expo-asset"
+    ],
+    "extra": {
+      "apiUrl": "https://purplehaze-nine.vercel.app/api/v1",
+      "websiteUrl": "https://purplehaze-nine.vercel.app",
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "ba8da325-3c13-4034-b043-5abbbe358fc3"
+      }
+    },
+    "owner": "bistacreation"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "191489357129",
+    "project_id": "purple-haze-cfeb7",
+    "storage_bucket": "purple-haze-cfeb7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:191489357129:android:3607748621e62578521698",
+        "android_client_info": {
+          "package_name": "com.bistacreation.purplehaze"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD29HbGwJCeFl0A0Miu_hj73IfdpMzlDMQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:191489357129:android:3e55a754cc4220ff521698",
+        "android_client_info": {
+          "package_name": "com.bistacreation.purplehaze.staff"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD29HbGwJCeFl0A0Miu_hj73IfdpMzlDMQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
