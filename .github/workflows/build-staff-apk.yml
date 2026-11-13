@@ -33,15 +33,16 @@ jobs:
       - name: Install Android SDK packages
         run: |
           sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          sdkmanager_path="$(find "$sdk_root" /opt/android-sdk /usr/lib/android-sdk -type f -name sdkmanager -print -quit 2>/dev/null || true)"
-          if [ -z "$sdkmanager_path" ]; then
-            echo "Android SDK manager was not found. ANDROID_HOME=${ANDROID_HOME:-unset}; ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
-            find /usr/local/lib/android /opt /usr/lib/android-sdk -maxdepth 5 -type f -name sdkmanager -print 2>/dev/null || true
-            exit 1
-          fi
-          sdk_root="$(dirname "$(dirname "$(dirname "$(dirname "$sdkmanager_path")")")")"
           echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          mkdir -p "$sdk_root/cmdline-tools" /tmp/android-cli
+          curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-15859902_latest.zip \
+            -o /tmp/android-cli-tools.zip
+          echo "4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583  /tmp/android-cli-tools.zip" | sha256sum --check
+          unzip -q /tmp/android-cli-tools.zip -d /tmp/android-cli
+          rm -rf "$sdk_root/cmdline-tools/latest"
+          mv /tmp/android-cli/cmdline-tools "$sdk_root/cmdline-tools/latest"
+          sdkmanager_path="$sdk_root/cmdline-tools/latest/bin/sdkmanager"
           echo "$(dirname "$sdkmanager_path")" >> "$GITHUB_PATH"
           echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
           yes | "$sdkmanager_path" --licenses >/dev/null
