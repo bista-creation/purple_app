@@ -3,7 +3,13 @@ import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, Sc
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
-import { AndroidImportance } from 'expo-notifications';
+import {
+  AndroidImportance,
+  AndroidAudioUsage,
+  AndroidAudioContentType,
+  AndroidNotificationVisibility,
+} from 'expo-notifications';
+import { useKeepAwake } from 'expo-keep-awake';
 import Constants from 'expo-constants';
 import OrderAlarm from '../components/OrderAlarm';
 import { API_BASE, assignRider, getAdminReport, getDispatchBoard, getDispatchRiders, listOrders, signIn, signOut, updateOrder, type DispatchDelivery, type DispatchRider, type StaffOrder, type StaffUser } from '../services/api';
@@ -20,6 +26,7 @@ const age = (value: string) => { const minutes = Math.max(0, Math.floor((Date.no
 const pretty = (s: string) => s.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (x) => x.toUpperCase());
 
 export default function OperationsScreen() {
+  useKeepAwake();
   const queryClient = useQueryClient();
   const [user, setUser] = useState<StaffUser | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -81,12 +88,24 @@ export default function OperationsScreen() {
       try {
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('incoming-orders', {
-            name: 'Incoming orders',
-            description: 'Urgent new restaurant orders',
+            name: 'Urgent Incoming Orders (Zomato Alarm)',
+            description: 'Loud continuous alarm for incoming restaurant orders',
             importance: AndroidImportance.MAX,
-            vibrationPattern: [0, 450, 180, 450, 180, 450],
+            vibrationPattern: [0, 800, 300, 800, 300, 1000],
             lightColor: '#F5B942',
             sound: 'order_alert.wav',
+            audioAttributes: {
+              usage: AndroidAudioUsage.ALARM,
+              contentType: AndroidAudioContentType.SONIFICATION,
+              flags: {
+                enforceAudibility: true,
+                requestHardwareAudioVideoSynchronization: false,
+              },
+            },
+            enableLights: true,
+            enableVibrate: true,
+            lockscreenVisibility: AndroidNotificationVisibility.PUBLIC,
+            bypassDnd: true,
           });
         }
         const permission = await Notifications.requestPermissionsAsync();
