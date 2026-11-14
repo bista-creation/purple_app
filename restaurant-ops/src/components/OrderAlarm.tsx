@@ -1,11 +1,28 @@
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Vibration } from 'react-native';
 import type { AudioPlayer } from 'expo-audio';
+import { Asset } from 'expo-asset';
 
-export default function OrderAlarm({ active }: { active: boolean }) {
+export type OrderAlarmProps = {
+  active: boolean;
+  vibrate?: boolean;
+  testSignal?: number;
+  onAutoplayBlockedChange?: (blocked: boolean) => void;
+};
+
+// Vibrate pattern: wait 0ms, vibrate 800ms, pause 300ms, vibrate 800ms, pause 300ms, vibrate 1000ms
+const URGENT_VIBRATE_PATTERN = [0, 800, 300, 800, 300, 1000];
+
+export default function OrderAlarm({
+  active,
+  vibrate = true,
+  testSignal = 0,
+  onAutoplayBlockedChange,
+}: OrderAlarmProps) {
   const playerRef = useRef<AudioPlayer | null>(null);
   const webAudioRef = useRef<HTMLAudioElement | null>(null);
   const activeRef = useRef(active);
+  const testTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     activeRef.current = active;
@@ -14,13 +31,16 @@ export default function OrderAlarm({ active }: { active: boolean }) {
   // Setup Web Audio (for browser counter dashboard)
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+
     try {
-      const audio = new Audio('/assets/order_alert.wav');
+      const asset = Asset.fromModule(require('../../assets/order_alert.wav'));
+      const audioUrl = asset?.uri || '/assets/order_alert.wav';
+      const audio = new Audio(audioUrl);
       audio.loop = true;
       audio.volume = 1.0;
       webAudioRef.current = audio;
     } catch {
-      // Audio not supported in this environment
+      // Audio element not supported in this environment
     }
 
     return () => {
@@ -43,7 +63,9 @@ export default function OrderAlarm({ active }: { active: boolean }) {
         player.loop = true;
         player.volume = 1.0;
         playerRef.current = player;
-        if (activeRef.current) player.play();
+        if (activeRef.current) {
+          player.play();
+        }
       })
       .catch(() => undefined);
 
@@ -55,21 +77,28 @@ export default function OrderAlarm({ active }: { active: boolean }) {
     };
   }, []);
 
-  // Play / Pause based on active orders awaiting acceptance
+  // Handle Active Order Alert (Audio + Continuous Vibration)
   useEffect(() => {
-    // Handle Web
+    // 1. Web Audio handling
     if (Platform.OS === 'web' && webAudioRef.current) {
       if (active) {
-        webAudioRef.current.play().catch(() => {
-          // Autoplay blocked until first user interaction
-        });
+        webAudioRef.current
+          .play()
+          .then(() => {
+            onAutoplayBlockedChange?.(false);
+          })
+          .catch((err) => {
+            if (err?.name === 'NotAllowedError') {
+              onAutoplayBlockedChange?.(true);
+            }
+          });
       } else {
         webAudioRef.current.pause();
         webAudioRef.current.currentTime = 0;
       }
     }
 
-    // Handle Native
+    // 2. Native Audio handling
     const player = playerRef.current;
     if (player) {
       if (active) {
@@ -78,7 +107,75 @@ export default function OrderAlarm({ active }: { active: boolean }) {
         player.pause();
       }
     }
-  }, [active]);
+
+    // 3. Foreground Vibration Pattern
+    if (active && vibrate && Platform.OS !== 'web') {
+      try {
+        Vibration.vibrate(URGENT_VIBRATE_PATTERN, true);
+      } catch {
+        // Device without vibrator or permission restricted
+      }
+    } else if (!active && Platform.OS !== 'web') {
+      try {
+        Vibration.cancel();
+      } catch {
+        // ignore
+      }
+    }
+
+    return () => {
+      if (Platform.OS !== 'web') {
+        try {
+          Vibration.cancel();
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [active, vibrate, onAutoplayBlockedChange]);
+
+  // Handle Test Signal (short 3.5s ring to test volume & vibration)
+  useEffect(() => {
+    if (testSignal <= 0) return;
+
+    if (testTimerRef.current) {
+      clearTimeout(testTimerRef.current);
+    }
+
+    // Play Web test
+    if (Platform.OS === 'web' && webAudioRef.current) {
+      webAudioRef.current.currentTime = 0;
+      webAudioRef.current
+        .play()
+        .then(() => onAutoplayBlockedChange?.(false))
+        .catch(() => onAutoplayBlockedChange?.(true));
+    }
+
+    // Play Native test
+    if (playerRef.current) {
+      playerRef.current.play();
+    }
+
+    if (vibrate && Platform.OS !== 'web') {
+      Vibration.vibrate([0, 500, 200, 500, 200, 500], false);
+    }
+
+    testTimerRef.current = setTimeout(() => {
+      if (!activeRef.current) {
+        if (Platform.OS === 'web' && webAudioRef.current) {
+          webAudioRef.current.pause();
+          webAudioRef.current.currentTime = 0;
+        }
+        playerRef.current?.pause();
+      }
+    }, 3500);
+
+    return () => {
+      if (testTimerRef.current) {
+        clearTimeout(testTimerRef.current);
+      }
+    };
+  }, [testSignal, vibrate, onAutoplayBlockedChange]);
 
   return null;
 }

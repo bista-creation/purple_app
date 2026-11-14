@@ -1,6 +1,6 @@
 # Purple Haze Operations
 
-Separate Expo customer-free staff application for restaurant order acceptance and kitchen progress.
+Separate Expo customer-free staff application for restaurant order acceptance, kitchen progress, dispatch, and administrative management.
 
 ## Run locally
 
@@ -13,12 +13,28 @@ Sign in with an existing backend account whose role is `STAFF` or `ADMIN`. Staff
 
 The backend enforces the same boundary: staff can access order operations, dispatch, and the limited rider data needed to assign deliveries. Menu, bookings, reports, rider administration, promotions, settlements and settings require an administrator role. UI visibility is not the security boundary; API routes enforce these permissions.
 
-## Order alerts
+## Industrial-Grade Order Alerts & Notifications
 
-- A short custom alert tone loops in the foreground while pending orders remain; staff can silence it or accept/decline orders.
-- Android creates a high-importance `incoming-orders` channel with vibration and the bundled tone.
-- Backend staff push messages target only tokens linked to `STAFF` or `ADMIN` accounts and use the bundled alert tone.
-- Remote push token registration requires the linked EAS project, notification permission, Android FCM credentials in EAS, and a native development build. Expo Go/web preview still allows staff UI and the live queue, but not dependable remote push.
-- iOS Critical Alerts are not configured. Standard OS notification settings, Focus, mute and device state can limit alert sound. No push service can prove an order was heard; the queue remains the source of truth.
+The app incorporates high-reliability order alerts modeled after leading restaurant POS systems (Zomato/Swiggy/DoorDash/Toast):
 
-The Android app is registered in Firebase project `purple-haze-cfeb7` as `Purple Haze Staff Operations`; its public client config is `google-services.json`. The EAS project is linked as `@bistacreation/purplehaze-operations`. Android APK profiles are available with `eas build --profile development --platform android` (dev client) and `eas build --profile preview --platform android` (internal APK). Configure Android FCM v1 credentials in the EAS project before expecting remote push delivery. Configure `EXPO_PUBLIC_API_URL` only when using a non-production backend.
+### 1. Audio Alarm & Vibration (Foreground)
+- **Continuous Looping Alarm**: Plays `order_alert.wav` at max priority while orders await staff acceptance.
+- **Urgent Foreground Haptics**: Uses `Vibration.vibrate([0, 800, 300, 800, 300, 1000], true)` so kitchen staff feel repeated pulses even in noisy kitchen environments.
+- **Smart Auto-Rearming Snooze**: Silencing the alarm silences only the *current* pending batch. The moment a brand new order arrives, the alarm automatically wakes up, re-arms, rings loudly, and vibrates.
+- **Web Autoplay Unlock**: Proactively detects browser autoplay policies on counter dashboards and provides an interactive "Enable Sound" banner to unlock the web audio context.
+
+### 2. Multi-Channel Android Notification Architecture
+- **`incoming-orders`** (MAX Importance): Custom `order_alert.wav`, alarm audio stream (`USAGE_ALARM`), DND bypass, lockscreen public visibility, and urgent vibration pattern.
+- **`order-updates`** (HIGH Importance): Standard notifications for rider assignments, prep status, and pickups.
+- **`booking-alerts`** (HIGH Importance): High-visibility notifications for new table reservations and event enquiries.
+- **Local Fallback Dispatcher**: When a new pending order is detected via Realtime or 5-second queue polling, the app immediately dispatches a high-priority local notification as a safety net if background FCM push is delayed.
+
+### 3. Global Floating Urgent Order Bar & Heads-Up Modal
+- **Urgent Order Bar**: Floats across every screen and admin tab (Overview, Menu, Bookings, Riders, Delivery) whenever pending orders exist, showing the order count, wait timer for the oldest order, alarm state, and a 1-tap "View & Accept" button.
+- **New Order Alert Modal**: Pops up an unmissable order card when a fresh order arrives with items summary, total price, customer details, and 1-tap Accept/Decline.
+- **Visual Escalation Tiers**: Orders waiting > 2 minutes display an amber "WAITING" badge; orders waiting > 5 minutes display a pulsing crimson "CRITICAL DELAY" badge.
+
+### 4. Admin Tab Notification Badges & Diagnostics
+- **Live Tab Badges**: Real-time counter badges on Admin tabs for pending orders (`Orders [2]`), ready undispatched deliveries (`Delivery [1]`), and pending reservations/enquiries (`Bookings [3]`).
+- **Alerts & Diagnostics Sheet**: One-tap tool to test the alarm speaker volume (3s sample ring), test device vibration, send a local test push to verify lockscreen appearance, inspect EAS push token, and review Android battery optimization tips.
+- **Offline / Network Loss Defense**: Sticky red warning bar appears immediately if the restaurant Wi-Fi drops, warning staff that live orders cannot be received.

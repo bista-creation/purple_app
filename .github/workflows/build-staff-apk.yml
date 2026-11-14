@@ -82,5 +82,6 @@ jobs:
           cp restaurant-ops/android/app/build/outputs/apk/release/app-release.apk release/purple-haze-operations.apk
           tag="staff-${GITHUB_SHA:0:12}"
           gh release create "$tag" release/purple-haze-operations.apk \
-            --title "Purple Haze Staff Operations $tag" \
-            --notes "Internal Android APK for existing Purple Haze staff and administrator accounts. Access remains role restricted by the backend."
+            --latest \
+            --title "Purple Haze Staff Operations $tag (v1.1.0)" \
+            --notes "Production-ready Android APK for Purple Haze staff and administrator accounts. Includes high-reliability continuous order alarms, multi-channel Android notification system, smart auto-rearming snooze, foreground haptics, and upgraded operations UI."
